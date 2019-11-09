@@ -1,218 +1,93 @@
-<?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom">
-    <id>https://jaychuan.github.io</id>
-    <title>Gridea</title>
-    <updated>2019-11-09T16:51:07.090Z</updated>
-    <generator>https://github.com/jpmonette/feed</generator>
-    <link rel="alternate" href="https://jaychuan.github.io"/>
-    <link rel="self" href="https://jaychuan.github.io/atom.xml"/>
-    <subtitle>温故而知新</subtitle>
-    <logo>https://jaychuan.github.io/images/avatar.png</logo>
-    <icon>https://jaychuan.github.io/favicon.ico</icon>
-    <rights>All rights reserved 2019, Gridea</rights>
-    <entry>
-        <title type="html"><![CDATA[理清JavaScript中的作用域与闭包]]></title>
-        <id>https://jaychuan.github.io/post/li-qing-javascript-zhong-de-zuo-yong-yu-yu-bi-bao</id>
-        <link href="https://jaychuan.github.io/post/li-qing-javascript-zhong-de-zuo-yong-yu-yu-bi-bao">
-        </link>
-        <updated>2019-11-09T16:49:04.000Z</updated>
-        <content type="html"><![CDATA[<p>我们在日常开发和学习中，或多或少都会接触到一个神奇的概念，那就是**‘闭包’**。当然，如果我们一来就介绍闭包，显然很难深入理解，所以我们将从作用域的概念出发，循序渐进地引入闭包的概念。</p>
-<h2 id="作用域">作用域</h2>
-<p>什么是作用域？我很乐意接受一些书籍上的说法——作用域是一套规则，一套关于变量存储、访问权限以及维护查询的规则。</p>
-<p>在讨论这三点规则之前，我们先介绍一下作用域的分类：</p>
-<ul>
-<li>
-<p><strong>全局作用域</strong></p>
-<p>顾名思义，全局作用域其实就相当于整个JS代码块，我们可以把它类比成一栋楼，这栋楼就是全局作用域，其中有电梯、大门、电线路、燃气水电设施这类公共设施延伸而出的便是全局作用域内的**<u>全局变量</u>**，由于全局变量在任何情况下都可以访问，在JavaScript中它可没有大楼里的公共设施的安全性和可维护性高，因此我们在声明全局变量的时候要格外小心。</p>
-</li>
-<li>
-<p><strong>函数作用域</strong></p>
-<p>函数作用域即是声明函数的时候，在函数中形成的作用域，函数内部的变量属于**<u>局部变量</u>**，与全局变量不同，局部变量有这较高的安全性和可维护性。</p>
-</li>
-<li>
-<p><strong>块作用域</strong></p>
-<p>try/catch和with会产生块作用域，ES6后，引入了**<u>let</u><strong>和</strong><u>const</u>**的声明变量的方式，块作用域跟函数作用域的内部变量都有较高的安全性和可维护性。块作用域的引入可以说是JavaScript的一大新突破（尽管在其他编程语言早就有了这个概念）</p>
-</li>
-</ul>
-<p>介绍完作用域的分类，接下来我们便可以对以上三点规则进行更细致的讨论：</p>
-<ul>
-<li>
-<p><strong>变量存储</strong></p>
-<p>声明的变量存储在哪个位置，这里的位置并非计算机存储里面的内存空间上，可以更简单的解释，其实就是声明在JS代码块内的位置。</p>
-</li>
-<li>
-<p><strong>访问权限</strong></p>
-<p>关于作用域的访问权限，有着如下规则：</p>
-<ul>
-<li>全局作用域内的变量可以被函数作用域以及块级作用域直接访问。</li>
-<li>全局作用域无法直接访问函数作用域和块级作用域的内部变量。</li>
-<li>嵌套作用域中子级作用域可以直接访问父级作用域的内部变量，无法访问兄弟作用域的内部变量</li>
-</ul>
-<pre><code class="language-javascript">var person = {
-  name: 'Lee'
-} // 全局作用域声明全局变量
-function foo () {
-  var a = 1 // 函数作用域声明函数变量
-  console.log(person.name) // Lee // 可以访问全局变量
-  function foo1() { // 嵌套作用域
-    var b = 2
-    console.log(a) // 1
-  }
-  foo1()
-  if (true) { // 嵌套作用域
-    let c = 3
-    console.log(a) // 1
-    console.log(b) // not defined // 无法访问兄弟作用域的变量
-  }
-}
-console.log(a) // not defined
-for (var i=0; i&lt;10; i++) { // var 声明没有形成块作用域
-	console.log(i)
-}
-console.log(i) // 10 //外部仍能访问
-for (let j=0; j&lt;10; j++) { // let声明形成了块作用域
-	console.log(j)
-}
-console.log(j) // not defined // 外部不能访问
-</code></pre>
-</li>
-<li>
-<p><strong>维护查询</strong></p>
-<p>维护查询其实在上述代码中，也已经体现出来了， 当我们去修改一个值的，需要查询这个值的存储位置，是否具有访问权限等。</p>
-</li>
-</ul>
-<h2 id="闭包">闭包</h2>
-<p>我们介绍了作用域，可能还是有疑惑，这跟闭包到底有什么联系呢？别急，我们下面就开始一一解答。</p>
-<p>闭包是什么？是规则？是函数？是作用域？是结果？</p>
-<p>以上或许在某一点上都对，但是也是令人不那么容易理解，初次接触闭包的概念的确太晦涩了。</p>
-<p>在JavaScript中，我更倾向于这样理解闭包——当一个**<u>函数</u><strong>能够访问所在的</strong><u>作用域</u><strong>，就产生了闭包，即使是这个函数并</strong>*不在其声明的作用域内***执行。</p>
-<p>这样看上去似乎闭包跟函数没有什么区别，因此我们也可以将闭包理解成函数，但这远远不够，闭包还有更神奇的地方，它跳出了所在的作用域，可以在其他作用域中执行，并且能够访问所在作用域：</p>
-<pre><code class="language-javascript">function foo () {
-  var a = 1
-  function bar () {
-    var b = 2
-    console.log(a+b)
-  }
-  return bar // 将函数作为返回值
-}
-var f = foo()
-f() // 3 // 我们在foo函数作用域外调用了bar函数且访问到了foo内部变量
-</code></pre>
-<p>按照我们之前所说，一个作用域是具有访问权限的规则，但是我在介绍访问权限这一块内容的时候多次提到了***<u>直接访问</u>***。然而闭包的产生让这访问权限的规则变得更加灵活，闭包保留着对已经执行过的作用域，依旧能够引用该作用域。如上述例子，我们执行了一遍foo()，并将其返回函数赋值给了f，在全局作用域中，执行f函数，实现了对已经执行过函数的作用域的引用。但不代表必须要返回一个函数，例如：</p>
-<pre><code class="language-javascript">function foo () {
-  var a = 1
-  window.f = function () {
-    console.log(a)
-  } // 并没有返回函数
-}
-foo()
-f() // 1
-</code></pre>
-<p>简而言之，我们甚至可以进一步理解闭包：一个**<u>外部作用域</u><strong>可以访问到了</strong><u>函数内部作用域</u><strong>的内容。可以说，闭包存在的意义就是让我们</strong><u><em>间接的访问</em></u>**函数内部的内容。</p>
-<p>讲到这里，是否已经大致清晰了闭包的概念了呢？接下来，我们还要扩展一些知识：</p>
-<ul>
-<li>
-<p><strong>闭包会阻止垃圾回收</strong>：</p>
-<p>众所周知，当一个普通的函数执行之后，JS引擎会将整个内部作用域销毁，来释放不再使用的内存空间，这即为垃圾回收机制。我们在之前就提到，闭包会保持已执行作用域的引用，这意味着闭包会阻止垃圾回收，使得该作用域可以一直存活。</p>
-<p>当然阻止垃圾回收可能会导致内存泄漏，从而影响性能，因此当不再使用时，我们可以手动将其释放掉：</p>
-<pre><code class="language-javascript">// 接着上面的例子
-window.f = null // 释放内存
-</code></pre>
-</li>
-<li>
-<p><strong>函数作为参数传递：</strong></p>
-<p>函数作为参数传递也是属于闭包的一种，因为它同样在外部作用域中访问了内部作用域的内容：</p>
-<pre><code class="language-javascript">function foo () {
-  var a = 2
-  function bar () {
-    console.log(a)
-  }
-  baz(bar)
-}
-function baz(fn) { // 另一个函数作用域
-  fn() // 访问成功 
-}
-foo()
-</code></pre>
-</li>
-<li>
-<p><strong>定时器、监听器、Ajax请求：</strong></p>
-<pre><code class="language-javascript">// 定时器
-function fn(msg) {
-  setTimeOut(function timer() { // 同样是闭包
-    console.log(msg)
-  }, 1000)
-} 
-fn('hello') 
-// 事件监听
-var elem = document.getElementById('elem')
-elem.addEventListener('click', function () {
-	console.log(elem) // 这也是闭包
-})
-</code></pre>
-<p>使用了回调函数，就是在使用闭包。</p>
-<p>关于定时器也有一个古老的问题：</p>
-<pre><code class="language-javascript">for (var i=0;i&lt;5;i++) {
-  setTimeout(function (){
-   	console.log(i) // 会输出5次5
-  }, 1000)
-}
-</code></pre>
-<p>由于setTimeout是异步函数，因此会等待循环结束后才开始执行，且由于使用了var声明变量，不会产生块作用域，此时的i为5了，这就导致一直输出了五次5。</p>
-<p>解决方案：</p>
-<pre><code class="language-javascript">// 闭包-立即执行函数
-for (var i=0;i&lt;5;i++) {
-  ;(function(j) {
-    setTimeout(function timer(){
-      console.log(j)
-    })
-  })(i) // 每一次循环都重新绑定了i的值
-}
-// 块作用域
-for (let i=0;i&lt;5;i++) { //let声明，每次迭代都会声明
-  setTimeout(function (){
-   	console.log(i) 
-  }, 1000)
-}
-</code></pre>
-</li>
-<li>
-<p><strong>强大的模块功能</strong>：</p>
-<p>由于闭包是能够将内部作用域暴露出去，这也就延伸出了更为强大的模块化功能，这里只做简单的介绍：</p>
-<pre><code class="language-javascript">var module = (function () {
-  var person = {
-    name: 'lee',
-    age: '21'
-  }
-  function getName () {
-    console.log(person.name)
-  }
-  function getAge () {
-    console.log(person.age)
-  }
-  return {
-    getName,
-    getAge
-  }
-})()
-module.getName() // lee
-module.getAge() // 21
-</code></pre>
-</li>
-</ul>
-<h2 id="总结">总结</h2>
-<p>本小节，我们介绍了JavaScript中的作用域，其实作用域就是一套规则，并且在JavaScript中作用域有三种分类，它们都有着各自的特点。</p>
-<p>介绍完作用域，我们引入了闭包的概念，了解闭包究竟是怎么回事？闭包在日常开发中随处可见。</p>
-<p>至此，我们将闭包已经理清的差不多了，更多的还是要在实践中多思考多运用。</p>
-]]></content>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[浅谈JavaScript类型]]></title>
-        <id>https://jaychuan.github.io/post/qian-tan-javascript-lei-xing</id>
-        <link href="https://jaychuan.github.io/post/qian-tan-javascript-lei-xing">
-        </link>
-        <updated>2019-11-09T16:47:11.000Z</updated>
-        <content type="html"><![CDATA[<h2 id="什么是类型">什么是类型？</h2>
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>浅谈JavaScript类型 | Gridea</title>
+<meta name="description" content="温故而知新" />
+<link rel="shortcut icon" href="https://jaychuan.github.io/favicon.ico?v=1573318264508">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://jaychuan.github.io/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://jaychuan.github.io">
+  <img class="avatar" src="https://jaychuan.github.io/images/avatar.png?v=1573318264508" alt="">
+  </a>
+  <h1 class="site-title">
+    Gridea
+  </h1>
+  <p class="site-description">
+    温故而知新
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+      
+        <a href="/post/about" class="menu">
+          关于
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              浅谈JavaScript类型
+            </h2>
+            <div class="post-info">
+              <span>
+                2019-11-10
+              </span>
+              <span>
+                16 min read
+              </span>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <h2 id="什么是类型">什么是类型？</h2>
 <p>从词语意思上来看，类型是决定事物内部状态的特征，影响着事物的行为。我们可以做一个不太严谨的类比，比如在学校中，老师归为一个类型，学生归为另一个类型，安保人员和学校管理者也分别归为不同的类型，他们都有不一样的内部特征，来决定着他们属于哪个类型，同时也定义了他们的行为——老师负责教书育人，学生负责学习，安保负责保证安全，学校管理者负责组织管理。</p>
 <p>在JS中，类型也同样有着这样一个定义，类型是JS中值的内部特征，定义值的行为。换句话说，JS对21和'21'来说，它们都是不同的类型，且有着区别的对应操作。同时，还需要知道一个概念——JS变量只有在执行的时候，才能知道变量的类型。</p>
 <h2 id="内置类型">内置类型</h2>
@@ -632,6 +507,94 @@ Boolean(false) // false
 <p>由于JavaScript中的number采用了双精度浮点数的格式，因此我们也了解了<strong>0.1 + 0.2 === 0.3</strong>为<strong>false</strong>的原因，同时也介绍了如何正确的比较浮点数，了解到如何区分<strong>0</strong>和**-0**。</p>
 <p>对于类型判断，typeof和instanceof足够我们正确判断一个值的类型，但是我们需要注意的是，JS设计之初遗留的bug导致了 <strong>typeof null === 'object'</strong>。</p>
 <p>在类型转换中，我们主要介绍了三种类型转换，同时也简单介绍了一个值转为原始类型的内部算法<strong>ToPrimitive</strong>。</p>
-]]></content>
-    </entry>
-</feed>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#%E4%BB%80%E4%B9%88%E6%98%AF%E7%B1%BB%E5%9E%8B">什么是类型？</a></li>
+<li><a href="#%E5%86%85%E7%BD%AE%E7%B1%BB%E5%9E%8B">内置类型</a>
+<ul>
+<li><a href="#null">null</a></li>
+<li><a href="#undefined">undefined</a></li>
+<li><a href="#boolean">boolean</a></li>
+<li><a href="#string">string</a></li>
+<li><a href="#number">number</a></li>
+<li><a href="#symbol">symbol</a></li>
+<li><a href="#object">object</a></li>
+</ul>
+</li>
+<li><a href="#%E7%B1%BB%E5%9E%8B%E5%88%A4%E6%96%AD">类型判断</a></li>
+<li><a href="#%E7%B1%BB%E5%9E%8B%E8%BD%AC%E6%8D%A2">类型转换</a>
+<ul>
+<li><a href="#%E8%BD%ACnumber">转Number</a></li>
+<li><a href="#%E8%BD%ACstring">转String</a></li>
+<li><a href="#%E8%BD%ACboolean">转Boolean</a></li>
+<li><a href="#toprimitive">ToPrimitive</a></li>
+</ul>
+</li>
+<li><a href="#%E6%80%BB%E7%BB%93">总结：</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://jaychuan.github.io/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>
